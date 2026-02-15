@@ -1,0 +1,71 @@
+{
+	"geode": "5.0.0-beta.1",
+	"gd": {
+		"win": "2.2081",
+		"android": "2.2081",
+		"mac": "2.2081",
+		"ios": "2.2081"
+	},
+	"id": "dominodev.custom-startups",
+	"name": "Custom Startups",
+	"version": "v1.0.0",
+	"developer": "dominodev",
+	"description": "Custom startup animations",
+	"dependencies": {
+		"geode.node-ids": ">=v1.20.0",
+		"prevter.imageplus": ">=v1.0.5-alpha.2"
+	},
+
+	"early-load": true,
+
+	"resources": {
+		"sprites": [
+			"resources/soggy.png"
+		]
+	},
+
+	"settings": {
+		"startup-image": {
+			"type": "file",
+			"name": "Startup Video (Animated Webp)",
+			"description": "<cb>Animated Webp</c> file that plays <cr>when you start the game</c>. Paired with <cy>Startup Sound</c> to create somewhat of a <cr>v<co>i<cy>d<cg>e<cb>o <cm>p<cp>l<cr>a<co>y<cy>e<cg>r<cb>.</c>",
+			"default": {
+				"win": "",
+				"mac": "",
+				"android": "",
+				"ios": ""
+			},
+			"control": {
+				"dialog": "open",
+				"filters": [
+					{
+						"files": ["*.webp"],
+						"description": "Animated webp files"
+					}
+				]
+			}
+		},
+
+		"startup-sound": {
+			"type": "file",
+			"name": "Startup Sound (MP3)",
+			"description": "Sound file that plays <cr>when you start the game</c>. Paired with <cy>Startup Video</c> to create somewhat of a <cr>v<co>i<cy>d<cg>e<cb>o <cm>p<cp>l<cr>a<co>y<cy>e<cg>r<cb>.</c>",
+			"default": {
+				"win": "",
+				"mac": "",
+				"android": "",
+				"ios": ""
+			},
+			"control": {
+				"dialog": "open",
+				"filters": [
+					{
+						"files": ["*.mp3"],
+						"description": "MP3 sound files"
+					}
+				]
+			}
+		}
+	}
+
+}
