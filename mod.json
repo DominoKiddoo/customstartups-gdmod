@@ -25,6 +25,13 @@
 	},
 
 	"settings": {
+
+		"video-settings": {
+			"type": "title",
+			"name": "Video Settings",
+			"description": "Settings related to the startup video and animation."
+		},
+
 		"startup-image": {
 			"type": "file",
 			"name": "Startup Video (Animated Webp)",
@@ -74,11 +81,46 @@
 			"description": "Scale of video. 1 is normal size, and 2 would be double ect."
 		},
 
+		"loading-settings": {
+			"type": "title",
+			"name": "Playback Settings",
+			"description": "Settings related to when the video is played."
+		},
+
 		"wait-until-load": {
 			"type": "bool",
 			"default": false,
 			"description": "Waits until the game is loaded to play the animation. It stays on the first frame of the uploaded video until the actual loading screen is done. Reduces video lag.",
 			"name": "Wait until game loaded."
+		},
+
+		"wul-type": {
+			"type": "string",
+			"one-of": ["First frame of video", "black"],
+			"name": "Wait until load type",
+			"default": "First frame of video",
+			"description": "What is shown while waiting for the game to load.",
+			"enable-if": "wait-until-load"
+		},
+
+		"exit-settings": {
+			"type": "title",
+			"name": "Exit Settings",
+			"description": "Settings related to fading out the video and exiting the animation."
+		},
+
+		"fade-out": {
+			"type": "bool",
+			"default": true,
+			"name": "Fade out video",
+			"description": "Whether the video should fade out when exiting the animation."
+		},
+
+		"fade-out-duration": {
+			"type": "float",
+			"default": 1,
+			"name": "Fade out duration",
+			"description": "Duration of the fade out when exiting the animation, in seconds."
 		}
 	}
 

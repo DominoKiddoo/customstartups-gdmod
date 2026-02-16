@@ -6,15 +6,10 @@
 using namespace geode::prelude;
 
 auto totalFrames = 0;
-
+auto originalVolume = 0.f;
 
 
 class $modify(CustomStartupsLayer, LoadingLayer) {
-    static void onModify(auto& self) {
-        if (!self.setHookPriorityPost("LoadingLayer::init", Priority::Late)) {
-            log::error("failed to set hook priority :c");
-        }
-    }
 
     bool init(bool refresh) {
         if (!LoadingLayer::init(refresh)) return false;
@@ -25,18 +20,31 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
         auto animVideo = imgp::AnimatedSprite::create(pathStr.c_str());
 
 
-        // auto usingCustomSounds = Mod::get()->getSettingValue<bool>("custom-sounds"); (example cuz syntax)
         
         if (!animVideo) {
-            log::error("Failed to load sprite from: {}", pathStr);
+            // log::error("Failed to load sprite from: {}", pathStr);
             return true;
         }
+
+
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         animVideo->setPosition(winSize / 2);
         
         OverlayManager::get()->addChild(animVideo);
         animVideo->pause();
+
+        if (Mod::get()->getSettingValue<std::string>("wul-type") == "black" && Mod::get()->getSettingValue<bool>("wait-until-load")) {
+            auto blackLayer = CCLayerColor::create({0, 0, 0, 255});
+            blackLayer->setID("blackOverlay");
+            blackLayer->ignoreAnchorPointForPosition(false);
+            blackLayer->setAnchorPoint({0.5f, 0.5f});
+
+            OverlayManager::get()->addChild(blackLayer);
+            blackLayer->setContentSize(winSize);
+            blackLayer->setPosition(winSize / 2);
+            
+        }
 
         auto waitForLoad = Mod::get()->getSettingValue<bool>("wait-until-load");
         auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
@@ -74,14 +82,31 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
         if (animVideo->getCurrentFrame() >= totalFrames - 1) {
             animVideo->stop();
             overlayManager->unschedule(schedule_selector(CustomStartupsLayer::checkIfDone));
-            FMODAudioEngine::get()->stopAllMusic(false);
-            animVideo->runAction(CCSequence::create
-                CCFadeOut::create(1.f),
-                CallFuncExt::create([tomato]() {
-                overlayManager->removeChild(animVideo);
 
+            auto audioEngine = FMODAudioEngine::sharedEngine();
+
+            audioEngine->m_musicVolume = originalVolume;
+            audioEngine->m_backgroundMusicChannel->setVolume(originalVolume);
+
+            auto fDuration = Mod::get()->getSettingValue<float>("fade-out-duration");
+            auto fadeOut = Mod::get()->getSettingValue<bool>("fade-out");
+            if (fadeOut == true) {
+                animVideo->runAction(CCSequence::create(
+                CCFadeOut::create(fDuration),
+                CallFuncExt::create([overlayManager, animVideo]() {
+                    overlayManager->removeChild(animVideo);
                 }),
-            )
+                nullptr
+             ));
+            } else {
+                animVideo->runAction(CCSequence::create(
+                    CallFuncExt::create([overlayManager, animVideo]() {
+                        overlayManager->removeChild(animVideo);
+                    }),
+                    nullptr));
+            }  
+            
+
         }
     }
     
@@ -94,14 +119,30 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
         auto overlayManager = OverlayManager::get();
         auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo"));
 
+        if (!animVideo) {
+            log::info("Failed to find video");
+            return true;
+        }
+        
         auto waitForLoad = Mod::get()->getSettingValue<bool>("wait-until-load");
-        FMODAudioEngine::get()->stopAllMusic(true);
-        auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
 
+        auto audioEngine = FMODAudioEngine::sharedEngine();
+
+        originalVolume = audioEngine->m_musicVolume;
+
+        audioEngine->m_musicVolume = 0.0f;
+        audioEngine->m_backgroundMusicChannel->setVolume(0.0f);
+
+
+        auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
 
         if (waitForLoad && animVideo) {
             animVideo->play();
             FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
+            if (Mod::get()->getSettingValue<std::string>("wul-type") == "black") {
+                auto blackOverlay = typeinfo_cast<CCLayerColor*>(overlayManager->getChildByID("blackOverlay"));
+                overlayManager->removeChild(blackOverlay);
+            }
         }
 
         return true;
