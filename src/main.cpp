@@ -25,8 +25,8 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
         auto animVideo = imgp::AnimatedSprite::create(pathStr.c_str());
 
 
-        auto usingCustomSounds = Mod::get()->getSettingValue<bool>("custom-sounds");
-        auto inbuiltSound = Mod::get()->getSettingValue<std::string>("inbuilt-sound");
+        // auto usingCustomSounds = Mod::get()->getSettingValue<bool>("custom-sounds"); (example cuz syntax)
+        
         if (!animVideo) {
             log::error("Failed to load sprite from: {}", pathStr);
             return true;
@@ -36,19 +36,26 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
         animVideo->setPosition(winSize / 2);
         
         OverlayManager::get()->addChild(animVideo);
+        animVideo->pause();
 
-        animVideo->play(); 
-        animVideo->setScale(2.5f);
+        auto waitForLoad = Mod::get()->getSettingValue<bool>("wait-until-load");
+        auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
+
+        if (!waitForLoad) {
+            animVideo->play();
+            FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
+        }
+        
+
+        animVideo->setScale(Mod::get()->getSettingValue<float>("vid-scale"));
+
         log::info("Successfully added startup animation: {}", pathStr);
         totalFrames = animVideo->getFrameCount();
 
         animVideo->setID("AnimVideo");
         OverlayManager::get()->schedule(schedule_selector(CustomStartupsLayer::checkIfDone));
         log::info("Total frames in animation: {}", totalFrames);
-
-        auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
-
-        FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
+    
 
         return true;
     }
@@ -66,8 +73,15 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
         //log::info("total frames: {}, current frame: {}", totalFrames, animVideo->getCurrentFrame());
         if (animVideo->getCurrentFrame() >= totalFrames - 1) {
             animVideo->stop();
-            overlayManager->removeChild(animVideo);
             overlayManager->unschedule(schedule_selector(CustomStartupsLayer::checkIfDone));
+            FMODAudioEngine::get()->stopAllMusic(false);
+            animVideo->runAction(CCSequence::create
+                CCFadeOut::create(1.f),
+                CallFuncExt::create([tomato]() {
+                overlayManager->removeChild(animVideo);
+
+                }),
+            )
         }
     }
     
@@ -76,8 +90,23 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
 class $modify(CustomStartUpsMenuLayer, MenuLayer) {
     bool init() {
         if (!MenuLayer::init()) return false;
+
+        auto overlayManager = OverlayManager::get();
+        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo"));
+
+        auto waitForLoad = Mod::get()->getSettingValue<bool>("wait-until-load");
         FMODAudioEngine::get()->stopAllMusic(true);
+        auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
+
+
+        if (waitForLoad && animVideo) {
+            animVideo->play();
+            FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
+        }
+
         return true;
+
+
     }
 
 };

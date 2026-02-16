@@ -1,5 +1,5 @@
 {
-	"geode": "5.0.0-beta.1",
+	"geode": "5.0.0-beta.2",
 	"gd": {
 		"win": "2.2081",
 		"android": "2.2081",
@@ -65,6 +65,20 @@
 					}
 				]
 			}
+		},
+
+		"vid-scale":  {
+			"type": "float",
+			"name": "Video scale",
+			"default": 1,
+			"description": "Scale of video. 1 is normal size, and 2 would be double ect."
+		},
+
+		"wait-until-load": {
+			"type": "bool",
+			"default": false,
+			"description": "Waits until the game is loaded to play the animation. It stays on the first frame of the uploaded video until the actual loading screen is done. Reduces video lag.",
+			"name": "Wait until game loaded."
 		}
 	}
 
