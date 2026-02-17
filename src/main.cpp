@@ -18,7 +18,12 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
         std::string pathStr = utils::string::pathToString(path);
 
         auto animVideo = imgp::AnimatedSprite::create(pathStr.c_str());
+        auto audioEngine = FMODAudioEngine::sharedEngine();
 
+        audioEngine->m_musicVolume = originalVolume;
+        log::info("Restored music volume to: {}", originalVolume);
+
+        audioEngine->m_backgroundMusicChannel->setVolume(originalVolume);
 
         
         if (!animVideo) {
@@ -83,11 +88,6 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
             animVideo->stop();
             overlayManager->unschedule(schedule_selector(CustomStartupsLayer::checkIfDone));
 
-            auto audioEngine = FMODAudioEngine::sharedEngine();
-
-            audioEngine->m_musicVolume = originalVolume;
-            audioEngine->m_backgroundMusicChannel->setVolume(originalVolume);
-
             auto fDuration = Mod::get()->getSettingValue<float>("fade-out-duration");
             auto fadeOut = Mod::get()->getSettingValue<bool>("fade-out");
             if (fadeOut == true) {
@@ -121,6 +121,13 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
 
         if (!animVideo) {
             log::info("Failed to find video");
+
+            auto audioEngine = FMODAudioEngine::sharedEngine();
+
+            audioEngine->m_musicVolume = originalVolume;
+            log::info("Restored music volume to: {}", originalVolume);
+            audioEngine->m_backgroundMusicChannel->setVolume(originalVolume);
+
             return true;
         }
         
@@ -132,6 +139,7 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
 
         audioEngine->m_musicVolume = 0.0f;
         audioEngine->m_backgroundMusicChannel->setVolume(0.0f);
+
 
 
         auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
