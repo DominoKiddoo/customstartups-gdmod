@@ -1,5 +1,5 @@
 {
-	"geode": "5.0.0-beta.2",
+	"geode": "5.0.0-beta.3",
 	"gd": {
 		"win": "2.2081",
 		"android": "2.2081",
@@ -18,11 +18,6 @@
 
 	"early-load": true,
 
-	"resources": {
-		"sprites": [
-			"resources/soggy.png"
-		]
-	},
 
 	"settings": {
 
@@ -74,12 +69,27 @@
 			}
 		},
 
+
+		"stretch-to-fit":  {
+			"type": "bool",
+			"name": "Stretch to fit",
+			"default": false,
+			"description": "If enabled, the video will stretch to fit the screen."
+		},
+
+
 		"vid-scale":  {
 			"type": "float",
 			"name": "Video scale",
 			"default": 1,
 			"description": "Scale of video. 1 is normal size, and 2 would be double ect."
 		},
+
+		"test-startup": {
+			"type": "custom:button-setting",
+			"name": "Test Startup"
+		},
+
 
 		"loading-settings": {
 			"type": "title",
@@ -96,10 +106,10 @@
 
 		"wul-type": {
 			"type": "string",
-			"one-of": ["First frame of video", "black"],
+			"one-of": ["First frame of video", "black", "nothing"],
 			"name": "Wait until load type",
 			"default": "First frame of video",
-			"description": "What is shown while waiting for the game to load.",
+			"description": "What is shown while waiting for the game to load. Nothing shows the normal loading screen until the game loads.",
 			"enable-if": "wait-until-load"
 		},
 
@@ -113,15 +123,30 @@
 			"type": "bool",
 			"default": true,
 			"name": "Fade out video",
-			"description": "Whether the video should fade out when exiting the animation."
+			"description": "Whether the video should <cp>fade out</c> when exiting the animation."
 		},
 
 		"fade-out-duration": {
 			"type": "float",
 			"default": 1,
 			"name": "Fade out duration",
-			"description": "Duration of the fade out when exiting the animation, in seconds."
+			"description": "Duration of the <cp>fade out</c> when exiting the animation, in seconds.",
+			"enable-if": "fade-out"
+		},
+
+		"fade-out-early": {
+			"type": "bool",
+			"default": false,
+			"name": "Fade out early",
+			"description": "Start <cp>fading out</c> before the video ends"
+		},
+
+		"fade-out-early-frames": {
+			"type": "int",
+			"default": 0,
+			"name": "Early fade out frames",
+			"description": "If you enabled <cy>Fade out early</c>, this sets how many frames before the end of the video the <cp>fade out</c> begins.",
+			"enable-if": "fade-out-early"
 		}
 	}
-
 }
