@@ -323,7 +323,36 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
                     audioEngine->m_backgroundMusicChannel->setVolume(trueVolume);
                 }
                 overlayManager->removeChild(animVideo);
+
+
+
             });
+
+            auto shownWelcome = Mod::get()->getSavedValue<bool>("shown-welcome");
+
+
+            if (!shownWelcome) {
+                this->runAction(CCSequence::create(
+                    CCDelayTime::create(0.5f),
+                    CallFuncExt::create([this]() {
+                        auto helpPopup = geode::createQuickPopup(
+                            "CustomStartups",
+                            "Thank you for installing <cl>CustomStartups</c>!\nRead the mod description for a guide.",
+                            "OK", "Don't show again",
+                            [this](auto, bool btn2) {
+                                if (btn2) {
+                                    log::info("dont show again");
+                                    Mod::get()->setSavedValue<bool>("shown-welcome", true);
+                                } else {
+                                    log::info("closed");
+                                }
+                            }
+                        );
+                        
+                    }),
+                    nullptr
+                ));
+            }
 
             if (fadeOut) {
                 animVideo->runAction(CCSequence::create(
@@ -346,14 +375,16 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
     bool init() {
         if (!MenuLayer::init()) return false;
 
+
         auto overlayManager = OverlayManager::get();
         auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo"));
 
         if (!animVideo) {
-            // log::info("No video found.");
+            log::info("No video found, showing welcome popup.");
             return true;
         }
         
+    
 
 
         auto waitForLoad = Mod::get()->getSettingValue<bool>("wait-until-load");
