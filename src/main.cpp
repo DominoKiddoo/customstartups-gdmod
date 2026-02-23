@@ -288,7 +288,7 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
 
         animVideo->setID("AnimVideo");
         OverlayManager::get()->schedule(schedule_selector(CustomStartupsLayer::checkIfDone));
-        log::info("Total frames in animation: {}", totalFrames);
+        log::info("Total frames {}", totalFrames);
     
         return true;
     }
@@ -380,7 +380,7 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
         auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo"));
 
         if (!animVideo) {
-            log::info("No video found, showing welcome popup.");
+            log::info("No video found.");
             return true;
         }
         
