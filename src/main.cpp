@@ -220,14 +220,19 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
         auto path = Mod::get()->getSettingValue<std::filesystem::path>("startup-image");
         std::string pathStr = utils::string::pathToString(path);
 
+
         auto animVideo = imgp::AnimatedSprite::create(pathStr.c_str());
         auto audioEngine = FMODAudioEngine::sharedEngine();
+
 
 
         if (!animVideo) {
             return true;
         }
 
+        if (pathStr.empty()) { // roxi 🪨👀 (haha get it because uhhhh like rock and ur eyes see so it sounds like roxi which is the reason this bug is fixed)
+            return true;
+        }
 
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
