@@ -230,10 +230,11 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
             return true;
         }
 
-        if (pathStr.empty()) { // roxi 🪨👀 (haha get it because uhhhh like rock and ur eyes see so it sounds like roxi which is the reason this bug is fixed)
+        if (pathStr.empty()) { // boog fix
             return true;
         }
 
+        
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         animVideo->setPosition(winSize / 2);
@@ -333,31 +334,7 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
 
             });
 
-            auto shownWelcome = Mod::get()->getSavedValue<bool>("shown-welcome");
-
-
-            if (!shownWelcome) {
-                this->runAction(CCSequence::create(
-                    CCDelayTime::create(0.5f),
-                    CallFuncExt::create([this]() {
-                        auto helpPopup = geode::createQuickPopup(
-                            "CustomStartups",
-                            "Thank you for installing <cl>CustomStartups</c>!\nRead the mod description for a guide.",
-                            "OK", "Don't show again",
-                            [this](auto, bool btn2) {
-                                if (btn2) {
-                                    log::info("dont show again");
-                                    Mod::get()->setSavedValue<bool>("shown-welcome", true);
-                                } else {
-                                    log::info("closed");
-                                }
-                            }
-                        );
-                        
-                    }),
-                    nullptr
-                ));
-            }
+        
 
             if (fadeOut) {
                 animVideo->runAction(CCSequence::create(
@@ -386,6 +363,29 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
 
         if (!animVideo) {
             log::info("No video found.");
+            auto shownWelcome = Mod::get()->getSavedValue<bool>("shown-welcome");
+            if (!shownWelcome) { 
+                this->runAction(CCSequence::create(
+                    CCDelayTime::create(0.5f),
+                    CallFuncExt::create([this]() {
+                        auto helpPopup = geode::createQuickPopup(
+                            "CustomStartups",
+                            "Thank you for installing <co>CustomStartups</c>!\nRead the mod description for a guide. And <cr>look at the settings</c> for <cg>a bunch of important customisation options</c>.",
+                            "Don't show again.", nullptr,
+                            [this](auto, bool btn1) {
+                                if (btn1) {
+                                    log::info("dont show again");
+                                    Mod::get()->setSavedValue<bool>("shown-welcome", true);
+                                } else {
+                                    log::info("closed");
+                                }
+                            }
+                        );
+                        
+                    }),
+                    nullptr
+                ));
+            }
             return true;
         }
         
