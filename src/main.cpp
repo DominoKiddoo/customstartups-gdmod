@@ -234,7 +234,7 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
             return true;
         }
 
-        
+
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         animVideo->setPosition(winSize / 2);
@@ -373,7 +373,7 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
                             "Thank you for installing <co>CustomStartups</c>!\nRead the mod description for a guide. And <cr>look at the settings</c> for <cg>a bunch of important customisation options</c>.",
                             "Don't show again.", nullptr,
                             [this](auto, bool btn1) {
-                                if (btn1) {
+                                if (!btn1) {
                                     log::info("dont show again");
                                     Mod::get()->setSavedValue<bool>("shown-welcome", true);
                                 } else {
