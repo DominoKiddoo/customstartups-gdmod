@@ -289,7 +289,6 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
         }
         
 
-        // log::info("added startup animation: {}", pathStr);
         totalFrames = animVideo->getFrameCount();
 
         animVideo->setID("AnimVideo");
@@ -301,10 +300,10 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
 
     void checkIfDone(float dt) {
         auto overlayManager = OverlayManager::get();
-        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo")); // im not sure why but this is the only way to cast to the video :c no other cast types work.
+        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo")); // im not sure why but this is the only way to cast to the video :c typinfo cast doesnt work
 
         if (!animVideo) {
-            log::info("Failed to find video");
+            // log::info("Failed to find video");
             return;
         }
 
