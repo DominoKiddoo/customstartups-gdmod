@@ -152,6 +152,9 @@
 
 	"tags": ["customization", "offline", "enhancement"],
 
-	"source": "https://github.com/DominoKiddoo/customstartups-gdmod"
+	"links": {
+		"source": "https://github.com/DominoKiddoo/customstartups-gdmod"
+	},
+	
 
 }
