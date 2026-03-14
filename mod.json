@@ -8,7 +8,7 @@
 	},
 	"id": "dominodev.custom-startups",
 	"name": "Custom Startups",
-	"version": "v1.0.1",
+	"version": "v1.0.2",
 	"developer": "dominodev",
 	"description": "Custom startup animations",
 	"dependencies": {

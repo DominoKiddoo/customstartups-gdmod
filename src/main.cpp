@@ -138,9 +138,11 @@ protected:
 
         auto earlyFrames = 0;
         if (Mod::get()->getSettingValue<bool>("fade-out-early")) {
+            
             earlyFrames = Mod::get()->getSettingValue<int>("fade-out-early-frames");
+            log::info("fading out early: {}", earlyFrames);
         }
-        
+        log::info("NOT fading out early: {}", earlyFrames);
 
         if (animVideo->getCurrentFrame() >= animVideo->getFrameCount() - (1 + earlyFrames)) {
             animVideo->stop();
@@ -210,9 +212,10 @@ $execute {
 // other things that arent buttons 🤯🤯🤯
 
 
-auto totalFrames = 0;
-
 class $modify(CustomStartupsLayer, LoadingLayer) {
+    struct Fields {
+        int lastFrame = -1;
+    };
 
     bool init(bool refresh) {
         if (!LoadingLayer::init(refresh)) return false;
@@ -220,101 +223,78 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
         auto path = Mod::get()->getSettingValue<std::filesystem::path>("startup-image");
         std::string pathStr = utils::string::pathToString(path);
 
-
         auto animVideo = imgp::AnimatedSprite::create(pathStr.c_str());
-        auto audioEngine = FMODAudioEngine::sharedEngine();
-
-
-
-        if (!animVideo) {
-            return true;
-        }
-
-        if (pathStr.empty()) { // boog fix
-            return true;
-        }
-
-
+        if (!animVideo || pathStr.empty()) return true;
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         animVideo->setPosition(winSize / 2);
-        
         OverlayManager::get()->addChild(animVideo);
-        if (Mod::get()->getSettingValue<std::string>("wul-type") == "nothing" && Mod::get()->getSettingValue<bool>("wait-until-load")) {
-            animVideo->setVisible(false);
-        }
+
+        bool waitLoad = Mod::get()->getSettingValue<bool>("wait-until-load");
+        std::string wulType = Mod::get()->getSettingValue<std::string>("wul-type");
+        
+        if (wulType == "nothing" && waitLoad) animVideo->setVisible(false);
         animVideo->pause();
 
-        if (Mod::get()->getSettingValue<std::string>("wul-type") == "black" && Mod::get()->getSettingValue<bool>("wait-until-load")) {
+        if (wulType == "black" && waitLoad) {
             auto blackLayer = CCLayerColor::create({0, 0, 0, 255});
             blackLayer->setID("blackOverlay");
             blackLayer->ignoreAnchorPointForPosition(false);
             blackLayer->setAnchorPoint({0.5f, 0.5f});
-
             OverlayManager::get()->addChild(blackLayer);
             blackLayer->setContentSize(winSize);
             blackLayer->setPosition(winSize / 2);
         }
 
-
-
-
-        auto waitForLoad = Mod::get()->getSettingValue<bool>("wait-until-load");
-        auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
-
-        if (!waitForLoad) {
+        if (!waitLoad) {
+            auto audioEngine = FMODAudioEngine::sharedEngine();
             audioEngine->m_musicVolume = 0.0f;
-            if (audioEngine->m_backgroundMusicChannel) {
-                audioEngine->m_backgroundMusicChannel->setVolume(0.0f);
-            }
+            if (audioEngine->m_backgroundMusicChannel) audioEngine->m_backgroundMusicChannel->setVolume(0.0f);
             
             animVideo->play();
-            FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
+            auto sound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
+            FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(sound).c_str());
         }
-
 
         auto contentSize = animVideo->getContentSize();
-
-        bool stretchToFit = Mod::get()->getSettingValue<bool>("stretch-to-fit");
-
-        if (stretchToFit) {
-            float scaleX = winSize.width / contentSize.width;
-            float scaleY = winSize.height / contentSize.height;
-            
-            animVideo->setScaleX(scaleX);
-            animVideo->setScaleY(scaleY);
+        if (Mod::get()->getSettingValue<bool>("stretch-to-fit")) {
+            animVideo->setScaleX(winSize.width / contentSize.width);
+            animVideo->setScaleY(winSize.height / contentSize.height);
         } else {
-            float customScale = Mod::get()->getSettingValue<double>("vid-scale");
-            animVideo->setScale(customScale);
+            animVideo->setScale(Mod::get()->getSettingValue<double>("vid-scale"));
         }
-        
-
-        totalFrames = animVideo->getFrameCount();
 
         animVideo->setID("AnimVideo");
-        OverlayManager::get()->schedule(schedule_selector(CustomStartupsLayer::checkIfDone));
-        log::info("Total frames {}", totalFrames);
+        animVideo->schedule(schedule_selector(CustomStartupsLayer::checkIfDone));
+        
+        log::info("Total frames {}", animVideo->getFrameCount());
     
         return true;
     }
 
     void checkIfDone(float dt) {
         auto overlayManager = OverlayManager::get();
-        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo")); // im not sure why but this is the only way to cast to the video :c typinfo cast doesnt work
+        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo"));
 
-        if (!animVideo) {
-            // log::info("Failed to find video");
-            return;
-        }
+        if (!animVideo) return;
 
-        auto earlyFrames = 0;
+        int earlyFrames = 0;
         if (Mod::get()->getSettingValue<bool>("fade-out-early")) {
             earlyFrames = Mod::get()->getSettingValue<int>("fade-out-early-frames");
         }
 
-        if (animVideo->getCurrentFrame() >= totalFrames - (1 + earlyFrames)) {
+        int currentFrame = animVideo->getCurrentFrame();
+        int frameCount = animVideo->getFrameCount();
+        if (frameCount <= 0) return;
+
+        int targetFrame = frameCount - (1 + earlyFrames);
+
+        bool reachedTarget = currentFrame >= targetFrame;
+        bool loopedBack = (m_fields->lastFrame != -1 && currentFrame < m_fields->lastFrame);
+
+        if (reachedTarget || loopedBack) {
+            animVideo->unschedule(schedule_selector(CustomStartupsLayer::checkIfDone));
             animVideo->stop();
-            overlayManager->unschedule(schedule_selector(CustomStartupsLayer::checkIfDone));
 
             auto fDuration = Mod::get()->getSettingValue<float>("fade-out-duration");
             auto fadeOut = Mod::get()->getSettingValue<bool>("fade-out");
@@ -328,12 +308,7 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
                     audioEngine->m_backgroundMusicChannel->setVolume(trueVolume);
                 }
                 overlayManager->removeChild(animVideo);
-
-
-
             });
-
-        
 
             if (fadeOut) {
                 animVideo->runAction(CCSequence::create(
@@ -342,21 +317,21 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
                     nullptr
                 ));
             } else {
-                animVideo->runAction(CCSequence::create(
-                    restoreVolumeAndCleanup,
-                    nullptr
-                ));
+                animVideo->runAction(restoreVolumeAndCleanup);
             }  
+        } else {
+            m_fields->lastFrame = currentFrame;
         }
     }
-
 };
 
 class $modify(CustomStartUpsMenuLayer, MenuLayer) {
     bool init() {
         if (!MenuLayer::init()) return false;
+        auto audioEngine = FMODAudioEngine::sharedEngine();
 
-
+        
+        preTestVolume = audioEngine->m_musicVolume;
         auto overlayManager = OverlayManager::get();
         auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo"));
 
@@ -392,27 +367,32 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
 
 
         auto waitForLoad = Mod::get()->getSettingValue<bool>("wait-until-load");
-        auto audioEngine = FMODAudioEngine::sharedEngine();
+       
         auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
+
+        audioEngine->m_musicVolume = 0.0f;
 
         if (Mod::get()->getSettingValue<std::string>("wul-type") == "nothing") {
             animVideo->setVisible(true);
         }
 
-        if (waitForLoad && animVideo) {
-            audioEngine->m_musicVolume = 0.0f;
-            if (audioEngine->m_backgroundMusicChannel) {
-                audioEngine->m_backgroundMusicChannel->setVolume(0.0f);
+        if (waitForLoad) {
+            if (animVideo->getCurrentFrame() <= 1) { 
+                auto audioEngine = FMODAudioEngine::sharedEngine();
+                auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
+
+                audioEngine->m_musicVolume = 0.0f;
+                if (audioEngine->m_backgroundMusicChannel) {
+                    audioEngine->m_backgroundMusicChannel->setVolume(0.0f);
+                }
+
+                animVideo->setVisible(true); 
+                animVideo->play();
+                FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
             }
 
-            animVideo->play();
-            FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
-            
-            if (Mod::get()->getSettingValue<std::string>("wul-type") == "black") {
-                auto blackOverlay = typeinfo_cast<CCLayerColor*>(overlayManager->getChildByID("blackOverlay"));
-                if (blackOverlay) {
-                    overlayManager->removeChild(blackOverlay);
-                }
+            if (auto blackOverlay = overlayManager->getChildByID("blackOverlay")) {
+                overlayManager->removeChild(blackOverlay);
             }
         }
 
