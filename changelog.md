@@ -7,3 +7,7 @@
 
 # 1.0.2
 - Fixed bugs.
+
+# 1.0.3
+- Added fallback for no files
+- Prefixed ids with mod id

@@ -86,11 +86,19 @@ protected:
         auto path = Mod::get()->getSettingValue<std::filesystem::path>("startup-image");
         std::string pathStr = utils::string::pathToString(path);
 
+        if (pathStr.empty() || !std::filesystem::exists(path)) {
+            log::warn("startup image path is empty or file does not exist!");
+            return; 
+        }
         if (cRunning) return;
         cRunning = true;
 
         auto animVideo = imgp::AnimatedSprite::create(pathStr.c_str());
-        if (!animVideo) return;
+        if (!animVideo) {
+            cRunning = false;
+            return;
+        }
+        
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         animVideo->setPosition(winSize / 2);
@@ -110,10 +118,15 @@ protected:
             animVideo->setScale(customScale);
         }
         auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
-        animVideo->setID("AnimVideo");
+        
+        animVideo->setID("dominodev.custom-startups/AnimVideo");
         
         OverlayManager::get()->addChild(animVideo);
-        FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
+
+        if (!uploadedSound.empty()) {
+            FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
+        }
+
 
         OverlayManager::get()->schedule(schedule_selector(ButtonSettingNodeV3::checkIfDoneForSettings)); 
 
@@ -129,7 +142,7 @@ protected:
 
     void checkIfDoneForSettings(float dt) {
         auto overlayManager = OverlayManager::get();
-        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo"));
+        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("dominodev.custom-startups/AnimVideo"));
 
         if (!animVideo) {
             overlayManager->unschedule(schedule_selector(ButtonSettingNodeV3::checkIfDoneForSettings));
@@ -140,9 +153,7 @@ protected:
         if (Mod::get()->getSettingValue<bool>("fade-out-early")) {
             
             earlyFrames = Mod::get()->getSettingValue<int>("fade-out-early-frames");
-            log::info("fading out early: {}", earlyFrames);
         }
-        log::info("NOT fading out early: {}", earlyFrames);
 
         if (animVideo->getCurrentFrame() >= animVideo->getFrameCount() - (1 + earlyFrames)) {
             animVideo->stop();
@@ -223,6 +234,12 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
         auto path = Mod::get()->getSettingValue<std::filesystem::path>("startup-image");
         std::string pathStr = utils::string::pathToString(path);
 
+        if (pathStr.empty() || !std::filesystem::exists(path)) {
+            log::warn("startup image path is empty or file does not exist!");
+            return true;
+        }
+
+
         auto animVideo = imgp::AnimatedSprite::create(pathStr.c_str());
         if (!animVideo || pathStr.empty()) return true;
 
@@ -238,7 +255,7 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
 
         if (wulType == "black" && waitLoad) {
             auto blackLayer = CCLayerColor::create({0, 0, 0, 255});
-            blackLayer->setID("blackOverlay");
+            blackLayer->setID("dominodev.custom-startups/blackOverlay");
             blackLayer->ignoreAnchorPointForPosition(false);
             blackLayer->setAnchorPoint({0.5f, 0.5f});
             OverlayManager::get()->addChild(blackLayer);
@@ -253,7 +270,12 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
             
             animVideo->play();
             auto sound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
-            FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(sound).c_str());
+
+            if (!sound.empty()) {
+                FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(sound).c_str());
+            }
+
+            
         }
 
         auto contentSize = animVideo->getContentSize();
@@ -264,17 +286,17 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
             animVideo->setScale(Mod::get()->getSettingValue<double>("vid-scale"));
         }
 
-        animVideo->setID("AnimVideo");
+        animVideo->setID("dominodev.custom-startups/AnimVideo");
         animVideo->schedule(schedule_selector(CustomStartupsLayer::checkIfDone));
         
-        log::info("Total frames {}", animVideo->getFrameCount());
+        // log::info("Total frames {}", animVideo->getFrameCount());
     
         return true;
     }
 
     void checkIfDone(float dt) {
         auto overlayManager = OverlayManager::get();
-        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo"));
+        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("dominodev.custom-startups/AnimVideo"));
 
         if (!animVideo) return;
 
@@ -333,10 +355,10 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
         
         preTestVolume = audioEngine->m_musicVolume;
         auto overlayManager = OverlayManager::get();
-        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("AnimVideo"));
+        auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("dominodev.custom-startups/AnimVideo"));
 
         if (!animVideo) {
-            log::info("No video found.");
+            // log::info("No video found.");
             auto shownWelcome = Mod::get()->getSavedValue<bool>("shown-welcome");
             if (!shownWelcome) { 
                 this->runAction(CCSequence::create(
@@ -348,10 +370,10 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
                             "Don't show again.", nullptr,
                             [this](auto, bool btn1) {
                                 if (!btn1) {
-                                    log::info("dont show again");
+                                    // log::info("dont show again");
                                     Mod::get()->setSavedValue<bool>("shown-welcome", true);
                                 } else {
-                                    log::info("closed");
+                                    // log::info("closed");
                                 }
                             }
                         );
@@ -388,10 +410,13 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
 
                 animVideo->setVisible(true); 
                 animVideo->play();
-                FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
+                if (!geode::utils::string::pathToString(uploadedSound).empty()) {
+                    FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
+                }
+                
             }
 
-            if (auto blackOverlay = overlayManager->getChildByID("blackOverlay")) {
+            if (auto blackOverlay = overlayManager->getChildByID("dominodev.custom-startups/blackOverlay")) {
                 overlayManager->removeChild(blackOverlay);
             }
         }
