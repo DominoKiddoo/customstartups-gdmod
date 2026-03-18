@@ -143,24 +143,33 @@ protected:
     void checkIfDoneForSettings(float dt) {
         auto overlayManager = OverlayManager::get();
         auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("dominodev.custom-startups/AnimVideo"));
+        animVideo->setForceLoop(false);
 
         if (!animVideo) {
             overlayManager->unschedule(schedule_selector(ButtonSettingNodeV3::checkIfDoneForSettings));
             return;
         }
 
-        auto earlyFrames = 0;
+        int earlyFrames = 0;
         if (Mod::get()->getSettingValue<bool>("fade-out-early")) {
-            
             earlyFrames = Mod::get()->getSettingValue<int>("fade-out-early-frames");
+        }
+        
+        if (earlyFrames >= animVideo->getFrameCount()) {
+            earlyFrames = 0;
+            geode::Notification::create("Fade-out duration exceeds video length.", NotificationIcon::Warning, 1.0f);
         }
 
         if (animVideo->getCurrentFrame() >= animVideo->getFrameCount() - (1 + earlyFrames)) {
-            animVideo->stop();
             overlayManager->unschedule(schedule_selector(ButtonSettingNodeV3::checkIfDoneForSettings));
 
             auto fDuration = Mod::get()->getSettingValue<float>("fade-out-duration");
             auto fadeOut = Mod::get()->getSettingValue<bool>("fade-out");
+            auto fadeOutEarly = Mod::get()->getSettingValue<bool>("fade-out-early");
+
+            if (fadeOutEarly && Mod::get()->getSettingValue<bool>("stop-video")) {
+                animVideo->pause();
+            }
 
             auto restoreVolumeAndCleanup = CallFuncExt::create([overlayManager, animVideo]() {
                 auto audioEngine = FMODAudioEngine::sharedEngine();
@@ -275,7 +284,10 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
                 FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(sound).c_str());
             }
 
+            animVideo->schedule(schedule_selector(CustomStartupsLayer::checkIfDone));
             
+        } else {
+            animVideo->pause();
         }
 
         auto contentSize = animVideo->getContentSize();
@@ -297,12 +309,18 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
     void checkIfDone(float dt) {
         auto overlayManager = OverlayManager::get();
         auto animVideo = static_cast<imgp::AnimatedSprite*>(overlayManager->getChildByID("dominodev.custom-startups/AnimVideo"));
-
+        animVideo->setForceLoop(false);
+        
         if (!animVideo) return;
 
         int earlyFrames = 0;
         if (Mod::get()->getSettingValue<bool>("fade-out-early")) {
             earlyFrames = Mod::get()->getSettingValue<int>("fade-out-early-frames");
+        }
+
+        if (earlyFrames >= animVideo->getFrameCount()) {
+            earlyFrames = 0;
+            geode::Notification::create("Fade-out duration exceeds video length.", NotificationIcon::Warning, 1.0f);
         }
 
         int currentFrame = animVideo->getCurrentFrame();
@@ -316,10 +334,17 @@ class $modify(CustomStartupsLayer, LoadingLayer) {
 
         if (reachedTarget || loopedBack) {
             animVideo->unschedule(schedule_selector(CustomStartupsLayer::checkIfDone));
-            animVideo->stop();
 
             auto fDuration = Mod::get()->getSettingValue<float>("fade-out-duration");
             auto fadeOut = Mod::get()->getSettingValue<bool>("fade-out");
+
+            auto fadeOutEarly = Mod::get()->getSettingValue<bool>("fade-out-early");
+
+
+            if (fadeOutEarly && Mod::get()->getSettingValue<bool>("stop-video")) {
+                animVideo->pause();
+            }
+
 
             auto restoreVolumeAndCleanup = CallFuncExt::create([overlayManager, animVideo]() {
                 auto audioEngine = FMODAudioEngine::sharedEngine();
@@ -399,17 +424,22 @@ class $modify(CustomStartUpsMenuLayer, MenuLayer) {
         }
 
         if (waitForLoad) {
+
             if (animVideo->getCurrentFrame() <= 1) { 
                 auto audioEngine = FMODAudioEngine::sharedEngine();
                 auto uploadedSound = Mod::get()->getSettingValue<std::filesystem::path>("startup-sound");
-
+                
                 audioEngine->m_musicVolume = 0.0f;
                 if (audioEngine->m_backgroundMusicChannel) {
                     audioEngine->m_backgroundMusicChannel->setVolume(0.0f);
                 }
+                auto fadeOutEarly = Mod::get()->getSettingValue<bool>("fade-out-early");
+            
 
                 animVideo->setVisible(true); 
                 animVideo->play();
+
+                animVideo->schedule(schedule_selector(CustomStartupsLayer::checkIfDone));
                 if (!geode::utils::string::pathToString(uploadedSound).empty()) {
                     FMODAudioEngine::get()->playEffect(geode::utils::string::pathToString(uploadedSound).c_str());
                 }

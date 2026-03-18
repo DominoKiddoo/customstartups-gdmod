@@ -8,7 +8,7 @@
 	},
 	"id": "dominodev.custom-startups",
 	"name": "Custom Startups",
-	"version": "v1.0.3",
+	"version": "v1.0.4",
 	"developer": "dominodev",
 	"description": "Custom startup animations",
 	"dependencies": {
@@ -147,6 +147,14 @@
 			"name": "Early fade out frames",
 			"description": "If you enabled <cy>Fade out early</c>, this sets how many frames before the end of the video the <cp>fade out</c> begins.",
 			"enable-if": "fade-out-early"
+		},
+
+		"stop-video": {
+			"name": "Stop video when fading out early",
+			"default": false,
+			"enable-if": "fade-out-early",
+			"type": "bool",
+			"description": "If you enabled <cy>Fade out early</c>, this is whether or not to <cr>stop the video</c> when it begins to fade."
 		}
 	},
 

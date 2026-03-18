@@ -11,4 +11,4 @@ Thats is all the <cb>n</c><cp>e</c><cr>c</c><co>e</c><cy>s</c><cg>s</c><cb>a</c>
 
 
 ## Credits
-THANK YOU SO MUCH to [slideglide](https://github.com/slideglide) and [yhosep34](https://github.com/Zilko) for taking hours out of their day to help me with LoadingLayer.
+THANK YOU SO MUCH to [slideglide](https://github.com/slideglide) and [Zilko](https://github.com/Zilko) for taking hours out of their day to help me with LoadingLayer.
